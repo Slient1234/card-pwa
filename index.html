@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07070f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="卡管家">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>信用卡管家</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg0:#07070f;--bg1:#0f0f1c;--bg2:#161626;--bg3:#1e1e32;--bg4:#252540;
+  --t1:#eeeaf8;--t2:#9991c0;--t3:#4e4970;
+  --p:#8b7cf8;--p2:rgba(139,124,248,.15);
+  --g:#2dd4a0;--g2:rgba(45,212,160,.15);
+  --r:#f06b6b;--r2:rgba(240,107,107,.15);
+  --b:#5ab0f5;--b2:rgba(90,176,245,.15);
+  --y:#f5a742;--y2:rgba(245,167,66,.15);
+  --border:rgba(255,255,255,0.07);
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;background:var(--bg0);color:var(--t1);font-family:-apple-system,'SF Pro Display',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;overflow:hidden}
+.app{height:100%;display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:relative}
+/* ── header ── */
+.hdr{padding:calc(var(--safe-top) + 14px) 20px 12px;display:flex;justify-content:space-between;align-items:flex-start;background:var(--bg0);flex-shrink:0}
+.hdr-l h1{font-size:20px;font-weight:600;letter-spacing:-.5px}
+.hdr-l p{font-size:12px;color:var(--t3);margin-top:2px}
+.av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--p),#c084fc);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+/* ── tabs ── */
+.tabs{display:flex;padding:0 20px;gap:0;border-bottom:0.5px solid var(--border);flex-shrink:0;background:var(--bg0)}
+.tab{flex:1;text-align:center;padding:9px 0 10px;font-size:12px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;user-select:none}
+.tab.on{color:var(--p);border-bottom-color:var(--p)}
+/* ── pages ── */
+.pages{flex:1;overflow:hidden;position:relative}
+.page{position:absolute;inset:0;overflow-y:auto;padding:16px 20px;padding-bottom:calc(var(--safe-bot) + 72px);display:none;-webkit-overflow-scrolling:touch}
+.page.on{display:block}
+/* ── bottom nav ── */
+.bnav{flex-shrink:0;background:var(--bg1);border-top:0.5px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 calc(var(--safe-bot) + 8px);z-index:20}
+.nbtn{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 18px;border-radius:10px;user-select:none}
+.nbtn .nl{font-size:10px;color:var(--t3);transition:.2s}
+.nbtn.on .nl{color:var(--p)}
+.nico{font-size:22px}
+/* ── labels ── */
+.sl{font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--t3);margin-bottom:10px;margin-top:2px}
+/* ── cards ── */
+.cc-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;margin-bottom:20px;scrollbar-width:none}
+.cc-row::-webkit-scrollbar{display:none}
+.cc{flex-shrink:0;width:224px;height:134px;border-radius:18px;padding:17px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;transition:transform .25s,opacity .25s;position:relative;overflow:hidden}
+.cc.sel{transform:translateY(-3px)}
+.cc:not(.sel){opacity:.65}
+.cc::before{content:'';position:absolute;width:120px;height:120px;border-radius:50%;top:-32px;right:-32px;background:rgba(255,255,255,.07)}
+.cc::after{content:'';position:absolute;width:80px;height:80px;border-radius:50%;bottom:-22px;left:28px;background:rgba(255,255,255,.04)}
+.ca{background:linear-gradient(135deg,#2d1fa8,#7c3aed)}
+.cb{background:linear-gradient(135deg,#064e3b,#059669)}
+.cc2{background:linear-gradient(135deg,#78350f,#d97706)}
+.cc-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+.cc-bank{font-size:11px;font-weight:600;opacity:.85}
+.cc-chip{width:24px;height:17px;border-radius:3px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.12)}
+.cc-num{font-size:12px;letter-spacing:2px;opacity:.6;position:relative;z-index:1;margin:5px 0}
+.cc-bot{display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1}
+.cc-name{font-size:9px;opacity:.65;letter-spacing:.5px}
+.cc-r{text-align:right}
+.cc-r span{display:block;font-size:9px;opacity:.5}
+.cc-r strong{font-size:13px;font-weight:500}
+.ubar{height:3px;background:rgba(255,255,255,.15);border-radius:2px;margin-top:4px;width:76px}
+.uf{height:100%;border-radius:2px;background:rgba(255,255,255,.75)}
+/* ── benefits ── */
+.ben-list{display:flex;flex-direction:column;gap:8px}
+.ben{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:12px 13px;display:flex;align-items:center;gap:11px}
+.ben-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ben-b{flex:1}
+.ben-t{font-size:13px;font-weight:500}
+.ben-s{font-size:11px;color:var(--t2);margin-top:2px}
+.pill{font-size:10px;padding:3px 9px;border-radius:20px;flex-shrink:0}
+/* ── suggest ── */
+.sug-box{background:linear-gradient(135deg,rgba(139,124,248,.18),rgba(139,124,248,.05));border:0.5px solid rgba(139,124,248,.35);border-radius:14px;padding:16px;margin-bottom:20px}
+.sug-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.sug-head span{font-size:13px;font-weight:600;color:var(--p)}
+.sug-head .badge{background:var(--p2);color:var(--p);font-size:10px;padding:2px 8px;border-radius:10px}
+.sug-row{display:flex;flex-direction:column;gap:8px}
+.sug-item{background:rgba(255,255,255,.04);border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:10px}
+.sug-ico{font-size:20px;flex-shrink:0;width:36px;text-align:center}
+.sug-b{flex:1}
+.sug-cat{font-size:11px;color:var(--t2)}
+.sug-card{font-size:13px;font-weight:500;color:var(--t1);margin-top:1px}
+.sug-reason{font-size:11px;color:var(--g);margin-top:2px}
+.sug-badge{font-size:11px;font-weight:600;color:var(--g);background:var(--g2);padding:4px 10px;border-radius:10px;flex-shrink:0}
+/* ── txn ── */
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sbox{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:13px 14px}
+.sbox-l{font-size:11px;color:var(--t3);margin-bottom:5px}
+.sbox-v{font-size:19px;font-weight:500}
+.warn-box{background:rgba(245,167,66,.08);border-left:3px solid var(--y);border-radius:0 10px 10px 0;padding:9px 12px;font-size:12px;color:var(--y);margin-bottom:14px;line-height:1.5}
+.frow{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.fb{padding:5px 12px;border-radius:20px;font-size:11px;cursor:pointer;border:0.5px solid var(--border);background:var(--bg2);color:var(--t2);transition:.2s;user-select:none}
+.fb.on{border-color:rgba(139,124,248,.5);color:var(--p);background:var(--p2)}
+.txn-list{display:flex;flex-direction:column}
+.txn{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.txn:last-child{border-bottom:none}
+.txn-ico{width:38px;height:38px;border-radius:11px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.txn-m{flex:1}
+.txn-n{font-size:13px}
+.txn-d{font-size:11px;color:var(--t3);margin-top:2px}
+.amt{font-size:14px;font-weight:500}
+.neg{color:var(--r)}.pos{color:var(--g)}
+/* ── reminders ── */
+.remind-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.remind{border-radius:14px;padding:15px;display:flex;align-items:flex-start;gap:12px;border:0.5px solid var(--border)}
+.remind.urgent{background:rgba(240,107,107,.08);border-color:rgba(240,107,107,.3)}
+.remind.soon{background:rgba(245,167,66,.08);border-color:rgba(245,167,66,.25)}
+.remind.ok{background:var(--bg2)}
+.remind-ico{font-size:22px;flex-shrink:0;margin-top:1px}
+.remind-b{flex:1}
+.remind-title{font-size:13px;font-weight:600}
+.remind-sub{font-size:11px;color:var(--t2);margin-top:3px;line-height:1.5}
+.remind-days{font-size:12px;font-weight:600;flex-shrink:0;padding:4px 10px;border-radius:10px}
+.remind.urgent .remind-days{color:var(--r);background:var(--r2)}
+.remind.soon .remind-days{color:var(--y);background:var(--y2)}
+.remind.ok .remind-days{color:var(--g);background:var(--g2)}
+.notif-btn{width:100%;padding:13px;background:var(--p2);border:0.5px solid rgba(139,124,248,.4);border-radius:12px;color:var(--p);font-size:13px;font-weight:500;cursor:pointer;text-align:center;margin-top:6px;transition:.2s}
+.notif-btn:active{opacity:.8}
+.notif-on{background:var(--g2);border-color:rgba(45,212,160,.4);color:var(--g)}
+/* ── stats ── */
+.gauge-wrap{background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.g-row{margin-bottom:13px}
+.g-row:last-child{margin-bottom:0}
+.g-hdr{display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:7px}
+.g-hdr strong{color:var(--t1);font-weight:500}
+.gbar{height:7px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.gf{height:100%;border-radius:4px}
+.chart-wrap{background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+.cat-rows{flex:1;display:flex;flex-direction:column;gap:8px}
+.cat-r{display:flex;justify-content:space-between;font-size:12px}
+.cat-n{color:var(--t2);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cat-a{color:var(--t1);font-weight:500}
+.trend-wrap{background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;padding:16px}
+.trend-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.trend-hdr .th-l{font-size:12px;color:var(--t2)}
+.trend-hdr .th-r{font-size:12px;color:var(--r)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:76px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.bar{width:100%;border-radius:5px 5px 0 0}
+.bl{font-size:10px;color:var(--t3)}
+/* ── install banner ── */
+.install-banner{display:none;background:linear-gradient(135deg,rgba(139,124,248,.2),rgba(92,78,230,.1));border:0.5px solid rgba(139,124,248,.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;align-items:center;gap:12px}
+.install-banner.show{display:flex}
+.ib-text{flex:1}
+.ib-text strong{font-size:13px;color:var(--p);display:block}
+.ib-text span{font-size:11px;color:var(--t2);margin-top:2px;display:block}
+.ib-btn{background:var(--p);color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div class="hdr-l"><h1>信用卡管家</h1><p id="hdr-sub">3 張卡片・本月 NT$12,340</p></div>
+    <div class="av">陳</div>
+  </div>
+  <div class="tabs">
+    <div class="tab on" onclick="go('cards',0)">💳 卡片</div>
+    <div class="tab" onclick="go('txn',1)">📋 明細</div>
+    <div class="tab" onclick="go('remind',2)">🔔 提醒</div>
+    <div class="tab" onclick="go('stats',3)">📊 統計</div>
+  </div>
+  <div class="pages">
+
+    <!-- ── CARDS ── -->
+    <div id="pg-cards" class="page on">
+      <div id="install-banner" class="install-banner">
+        <span style="font-size:28px">📲</span>
+        <div class="ib-text">
+          <strong>加到主畫面</strong>
+          <span>離線使用・推播通知・原生體驗</span>
+        </div>
+        <button class="ib-btn" id="install-btn">安裝</button>
+      </div>
+      <div class="sl">點選卡片切換優惠</div>
+      <div class="cc-row">
+        <div class="cc ca sel" id="c0" onclick="selCard(0)">
+          <div class="cc-top"><span class="cc-bank">國泰世華</span><div class="cc-chip"></div></div>
+          <div class="cc-num">•••• •••• •••• 8823</div>
+          <div class="cc-bot"><span class="cc-name">VISA INFINITE</span>
+            <div class="cc-r"><span>已使用</span><strong>NT$18,200</strong><div class="ubar"><div class="uf" style="width:36%"></div></div></div>
+          </div>
+        </div>
+        <div class="cc cb" id="c1" onclick="selCard(1)">
+          <div class="cc-top"><span class="cc-bank">玉山銀行</span><div class="cc-chip"></div></div>
+          <div class="cc-num">•••• •••• •••• 4451</div>
+          <div class="cc-bot"><span class="cc-name">JCB GOLD</span>
+            <div class="cc-r"><span>已使用</span><strong>NT$8,900</strong><div class="ubar"><div class="uf" style="width:59%"></div></div></div>
+          </div>
+        </div>
+        <div class="cc cc2" id="c2" onclick="selCard(2)">
+          <div class="cc-top"><span class="cc-bank">台新銀行</span><div class="cc-chip"></div></div>
+          <div class="cc-num">•••• •••• •••• 7730</div>
+          <div class="cc-bot"><span class="cc-name">MasterCard</span>
+            <div class="cc-r"><span>已使用</span><strong>NT$3,200</strong><div class="ubar"><div class="uf" style="width:16%"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- best card suggestion -->
+      <div class="sug-box">
+        <div class="sug-head">
+          <span>✨ 最佳用卡建議</span>
+          <div class="badge">AI 推薦</div>
+        </div>
+        <div class="sug-row">
+          <div class="sug-item">
+            <div class="sug-ico">🍜</div>
+            <div class="sug-b">
+              <div class="sug-cat">用餐 / 外送</div>
+              <div class="sug-card">台新銀行 7730</div>
+              <div class="sug-reason">外送平台 10%，最高回饋</div>
+            </div>
+            <div class="sug-badge">10%</div>
+          </div>
+          <div class="sug-item">
+            <div class="sug-ico">🛒</div>
+            <div class="sug-b">
+              <div class="sug-cat">網路購物</div>
+              <div class="sug-card">國泰世華 8823</div>
+              <div class="sug-reason">滿千折百 + 額度尚寬裕</div>
+            </div>
+            <div class="sug-badge">折100</div>
+          </div>
+          <div class="sug-item">
+            <div class="sug-ico">✈️</div>
+            <div class="sug-b">
+              <div class="sug-cat">旅遊 / 機票</div>
+              <div class="sug-card">國泰世華 8823</div>
+              <div class="sug-reason">國際機票 3% 回饋</div>
+            </div>
+            <div class="sug-badge">3%</div>
+          </div>
+          <div class="sug-item">
+            <div class="sug-ico">🛍️</div>
+            <div class="sug-b">
+              <div class="sug-cat">百貨 / 實體購物</div>
+              <div class="sug-card">台新銀行 7730</div>
+              <div class="sug-reason">百貨公司 5%，最划算</div>
+            </div>
+            <div class="sug-badge">5%</div>
+          </div>
+          <div class="sug-item">
+            <div class="sug-ico">⛽</div>
+            <div class="sug-b">
+              <div class="sug-cat">加油 / 超商</div>
+              <div class="sug-card">台新 / 玉山 各一</div>
+              <div class="sug-reason">台新加油 3%；玉山超商 3%</div>
+            </div>
+            <div class="sug-badge">3%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sl" id="ben-label">國泰世華 — 本月專屬優惠</div>
+      <div class="ben-list" id="ben-list"></div>
+    </div>
+
+    <!-- ── TXN ── -->
+    <div id="pg-txn" class="page">
+      <div class="sum-grid">
+        <div class="sbox"><div class="sbox-l">本月總消費</div><div class="sbox-v" style="color:var(--r)">NT$12,340</div></div>
+        <div class="sbox"><div class="sbox-l">總可用額度</div><div class="sbox-v" style="color:var(--g)">NT$87,660</div></div>
+        <div class="sbox"><div class="sbox-l">回饋累積</div><div class="sbox-v" style="color:var(--p)">NT$486</div></div>
+        <div class="sbox"><div class="sbox-l">最近帳單</div><div class="sbox-v" style="color:var(--y)">5天後</div></div>
+      </div>
+      <div class="warn-box">⚠️ 玉山 4451 已使用 59%，建議近期改刷其他卡片</div>
+      <div class="frow">
+        <div class="fb on" onclick="filterTxn('all',this)">全部</div>
+        <div class="fb" onclick="filterTxn(0,this)">國泰 8823</div>
+        <div class="fb" onclick="filterTxn(1,this)">玉山 4451</div>
+        <div class="fb" onclick="filterTxn(2,this)">台新 7730</div>
+      </div>
+      <div class="sl">交易明細</div>
+      <div class="txn-list" id="txn-list"></div>
+    </div>
+
+    <!-- ── REMIND ── -->
+    <div id="pg-remind" class="page">
+      <div class="sl">帳單繳費提醒</div>
+      <div class="remind-list">
+        <div class="remind urgent">
+          <div class="remind-ico">🔴</div>
+          <div class="remind-b">
+            <div class="remind-title">玉山銀行 4451</div>
+            <div class="remind-sub">帳單金額 NT$8,900<br>繳費截止：4月1日（週二）<br>最低應繳：NT$445</div>
+          </div>
+          <div class="remind-days">5天後</div>
+        </div>
+        <div class="remind soon">
+          <div class="remind-ico">🟡</div>
+          <div class="remind-b">
+            <div class="remind-title">台新銀行 7730</div>
+            <div class="remind-sub">帳單金額 NT$3,200<br>繳費截止：4月8日（週二）<br>最低應繳：NT$160</div>
+          </div>
+          <div class="remind-days">12天後</div>
+        </div>
+        <div class="remind ok">
+          <div class="remind-ico">🟢</div>
+          <div class="remind-b">
+            <div class="remind-title">國泰世華 8823</div>
+            <div class="remind-sub">帳單金額 NT$18,200<br>繳費截止：4月15日（週二）<br>最低應繳：NT$910</div>
+          </div>
+          <div class="remind-days">19天後</div>
+        </div>
+      </div>
+
+      <div class="sl">下期帳單預估</div>
+      <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <span style="font-size:13px;color:var(--t2)">三張卡合計</span>
+          <span style="font-size:20px;font-weight:600;color:var(--r)">NT$30,300</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="color:var(--t2)">國泰世華 8823</span><span style="color:var(--t1)">NT$18,200</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="color:var(--t2)">玉山銀行 4451</span><span style="color:var(--t1)">NT$8,900</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="color:var(--t2)">台新銀行 7730</span><span style="color:var(--t1)">NT$3,200</span>
+          </div>
+        </div>
+        <div style="border-top:0.5px solid var(--border);margin-top:12px;padding-top:12px;font-size:11px;color:var(--t3)">
+          💡 建議預留帳戶餘額 NT$31,000 以上，確保自動扣繳順利
+        </div>
+      </div>
+
+      <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+        🔔 開啟帳單推播提醒
+      </button>
+      <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:8px">
+        到期前 3 天、1 天各提醒一次
+      </div>
+    </div>
+
+    <!-- ── STATS ── -->
+    <div id="pg-stats" class="page">
+      <div class="sl">額度使用率</div>
+      <div class="gauge-wrap">
+        <div class="g-row">
+          <div class="g-hdr"><span>國泰世華 8823</span><strong>36% <span style="color:var(--t3);font-weight:400">NT$18,200/50,000</span></strong></div>
+          <div class="gbar"><div class="gf" style="width:36%;background:var(--p)"></div></div>
+        </div>
+        <div class="g-row">
+          <div class="g-hdr"><span>玉山銀行 4451</span><strong style="color:var(--y)">59% <span style="color:var(--t3);font-weight:400">NT$8,900/15,000</span></strong></div>
+          <div class="gbar"><div class="gf" style="width:59%;background:var(--y)"></div></div>
+        </div>
+        <div class="g-row">
+          <div class="g-hdr"><span>台新銀行 7730</span><strong>16% <span style="color:var(--t3);font-weight:400">NT$3,200/20,000</span></strong></div>
+          <div class="gbar"><div class="gf" style="width:16%;background:var(--g)"></div></div>
+        </div>
+      </div>
+
+      <div class="sl">消費分類（3月）</div>
+      <div class="chart-wrap">
+        <svg width="90" height="90" viewBox="0 0 90 90">
+          <circle cx="45" cy="45" r="31" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="15"/>
+          <circle cx="45" cy="45" r="31" fill="none" stroke="#f06b6b" stroke-width="15" stroke-dasharray="59 136" stroke-dashoffset="0" transform="rotate(-90 45 45)"/>
+          <circle cx="45" cy="45" r="31" fill="none" stroke="#8b7cf8" stroke-width="15" stroke-dasharray="42 153" stroke-dashoffset="-59" transform="rotate(-90 45 45)"/>
+          <circle cx="45" cy="45" r="31" fill="none" stroke="#5ab0f5" stroke-width="15" stroke-dasharray="26 169" stroke-dashoffset="-101" transform="rotate(-90 45 45)"/>
+          <circle cx="45" cy="45" r="31" fill="none" stroke="#f5a742" stroke-width="15" stroke-dasharray="16 179" stroke-dashoffset="-127" transform="rotate(-90 45 45)"/>
+          <circle cx="45" cy="45" r="31" fill="none" stroke="#2dd4a0" stroke-width="15" stroke-dasharray="52 143" stroke-dashoffset="-143" transform="rotate(-90 45 45)"/>
+          <text x="45" y="49" text-anchor="middle" font-size="10" fill="#9991c0">3月</text>
+        </svg>
+        <div class="cat-rows">
+          <div class="cat-r"><span class="cat-n"><span class="dot" style="background:#f06b6b"></span>餐飲</span><span class="cat-a">NT$3,855</span></div>
+          <div class="cat-r"><span class="cat-n"><span class="dot" style="background:#8b7cf8"></span>購物</span><span class="cat-a">NT$2,690</span></div>
+          <div class="cat-r"><span class="cat-n"><span class="dot" style="background:#5ab0f5"></span>交通</span><span class="cat-a">NT$1,680</span></div>
+          <div class="cat-r"><span class="cat-n"><span class="dot" style="background:#f5a742"></span>娛樂</span><span class="cat-a">NT$1,260</span></div>
+          <div class="cat-r"><span class="cat-n"><span class="dot" style="background:#2dd4a0"></span>其他</span><span class="cat-a">NT$2,855</span></div>
+        </div>
+      </div>
+
+      <div class="sl">近6個月趨勢</div>
+      <div class="trend-wrap">
+        <div class="trend-hdr">
+          <span class="th-l">月均 NT$11,450</span>
+          <span class="th-r">▲ 本月 +7.8%</span>
+        </div>
+        <div class="bars" id="bars"></div>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <div class="bnav">
+    <div class="nbtn on" id="nb0" onclick="go('cards',0)"><span class="nico">💳</span><span class="nl">卡片</span></div>
+    <div class="nbtn" id="nb1" onclick="go('txn',1)"><span class="nico">📋</span><span class="nl">明細</span></div>
+    <div class="nbtn" id="nb2" onclick="go('remind',2)"><span class="nico">🔔</span><span class="nl">提醒</span></div>
+    <div class="nbtn" id="nb3" onclick="go('stats',3)"><span class="nico">📊</span><span class="nl">統計</span></div>
+  </div>
+</div>
+
+<script>
+// ── data ──
+const BENS = [
+  [
+    {ico:'🍜',bg:'var(--r2)',t:'餐廳消費 5% 回饋',s:'VISA 合作餐廳，每月上限 NT$500',pill:'餐飲',pc:'color:var(--r);background:var(--r2)'},
+    {ico:'✈️',bg:'var(--b2)',t:'國際機票 3% 回饋',s:'每月上限 NT$300，需國際交易',pill:'旅遊',pc:'color:var(--b);background:var(--b2)'},
+    {ico:'🛒',bg:'var(--p2)',t:'網購滿千折百',s:'momo、蝦皮、PChome',pill:'購物',pc:'color:var(--p);background:var(--p2)'},
+    {ico:'💵',bg:'var(--g2)',t:'一般消費 1% 現金回饋',s:'無上限・每月自動入帳',pill:'回饋',pc:'color:var(--g);background:var(--g2)'},
+    {ico:'🎵',bg:'var(--y2)',t:'串流訂閱 8折',s:'Spotify、Netflix、Disney+',pill:'娛樂',pc:'color:var(--y);background:var(--y2)'},
+  ],
+  [
+    {ico:'🧋',bg:'var(--r2)',t:'超商消費 3% 回饋',s:'7-11、全家、萊爾富',pill:'餐飲',pc:'color:var(--r);background:var(--r2)'},
+    {ico:'🚇',bg:'var(--b2)',t:'捷運悠遊卡加值 1%',s:'每筆加值皆享回饋',pill:'交通',pc:'color:var(--b);background:var(--b2)'},
+    {ico:'📱',bg:'var(--g2)',t:'行動支付 2% 回饋',s:'Apple Pay、Google Pay',pill:'回饋',pc:'color:var(--g);background:var(--g2)'},
+    {ico:'🏥',bg:'var(--p2)',t:'醫療門診 5% 回饋',s:'掛號費、藥局消費',pill:'醫療',pc:'color:var(--p);background:var(--p2)'},
+  ],
+  [
+    {ico:'🛍️',bg:'var(--p2)',t:'百貨公司 5% 回饋',s:'新光三越、SOGO、101',pill:'購物',pc:'color:var(--p);background:var(--p2)'},
+    {ico:'🎬',bg:'var(--b2)',t:'影城買一送一',s:'威秀、秀泰，每月限2次',pill:'娛樂',pc:'color:var(--b);background:var(--b2)'},
+    {ico:'⛽',bg:'var(--g2)',t:'加油 3% 回饋',s:'台灣中油、台塑加油站',pill:'回饋',pc:'color:var(--g);background:var(--g2)'},
+    {ico:'🍕',bg:'var(--r2)',t:'外送平台 10% 折扣',s:'Uber Eats、foodpanda',pill:'餐飲',pc:'color:var(--r);background:var(--r2)'},
+  ]
+];
+const CNAMES=['國泰世華','玉山銀行','台新銀行'];
+const TXNS=[
+  {ico:'🍣',n:'壽司郎',d:'今天 12:30',c:0,a:-680},
+  {ico:'☕',n:'路易莎咖啡',d:'今天 08:15',c:1,a:-155},
+  {ico:'🛒',n:'momo 購物網',d:'03/26',c:0,a:-2490},
+  {ico:'⛽',n:'台灣中油',d:'03/25',c:2,a:-1200},
+  {ico:'🎬',n:'威秀影城',d:'03/24',c:1,a:-560},
+  {ico:'🏋️',n:'健身房月費',d:'03/22',c:2,a:-1500},
+  {ico:'💰',n:'現金回饋入帳',d:'03/20',c:0,a:234},
+  {ico:'🍔',n:'麥當勞',d:'03/19',c:1,a:-320},
+  {ico:'🛍️',n:'SOGO百貨',d:'03/18',c:2,a:-3800},
+  {ico:'✈️',n:'長榮航空',d:'03/15',c:0,a:-8500},
+  {ico:'📱',n:'Apple Store',d:'03/12',c:1,a:-12900},
+  {ico:'🏥',n:'台大醫院掛號',d:'03/10',c:1,a:-150},
+];
+const MONTHS=['10月','11月','12月','1月','2月','3月'];
+const SPEND=[9200,10800,14500,8900,11450,12340];
+
+// ── card select ──
+let curCard=0;
+function selCard(i){
+  curCard=i;
+  for(let j=0;j<3;j++) document.getElementById('c'+j).classList.toggle('sel',j===i);
+  document.getElementById('ben-label').textContent=CNAMES[i]+' — 本月專屬優惠';
+  document.getElementById('ben-list').innerHTML=BENS[i].map(b=>`
+    <div class="ben">
+      <div class="ben-ico" style="background:${b.bg}">${b.ico}</div>
+      <div class="ben-b"><div class="ben-t">${b.t}</div><div class="ben-s">${b.s}</div></div>
+      <div class="pill" style="${b.pc}">${b.pill}</div>
+    </div>`).join('');
+}
+selCard(0);
+
+// ── txn filter ──
+let curF='all';
+function filterTxn(f,el){
+  curF=f;
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderTxn();
+}
+function renderTxn(){
+  const cn=['國泰 8823','玉山 4451','台新 7730'];
+  const data=curF==='all'?TXNS:TXNS.filter(t=>t.c===curF);
+  document.getElementById('txn-list').innerHTML=data.map(t=>`
+    <div class="txn">
+      <div class="txn-ico">${t.ico}</div>
+      <div class="txn-m"><div class="txn-n">${t.n}</div><div class="txn-d">${t.d} · ${cn[t.c]}</div></div>
+      <div class="amt ${t.a>0?'pos':'neg'}">${t.a>0?'+':''}NT$${Math.abs(t.a).toLocaleString()}</div>
+    </div>`).join('');
+}
+renderTxn();
+
+// ── bars ──
+(function(){
+  const max=Math.max(...SPEND);
+  document.getElementById('bars').innerHTML=SPEND.map((v,i)=>{
+    const h=Math.round(v/max*70);
+    return `<div class="bar-col"><div class="bar" style="height:${h}px;background:${i===5?'var(--p)':'rgba(139,124,248,.28)'}"></div><div class="bl">${MONTHS[i]}</div></div>`;
+  }).join('');
+})();
+
+// ── page switch ──
+function go(page,idx){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.nbtn').forEach(n=>n.classList.remove('on'));
+  document.getElementById('pg-'+page).classList.add('on');
+  document.querySelectorAll('.tab')[idx].classList.add('on');
+  document.getElementById('nb'+idx).classList.add('on');
+}
+
+// ── notifications ──
+let notifOn=false;
+function toggleNotif(){
+  const btn=document.getElementById('notif-btn');
+  if(!notifOn){
+    if('Notification' in window){
+      Notification.requestPermission().then(p=>{
+        if(p==='granted'){
+          notifOn=true;
+          btn.textContent='✅ 推播提醒已開啟';
+          btn.className='notif-btn notif-on';
+          new Notification('信用卡管家',{body:'帳單提醒已開啟！玉山 4451 將於5天後到期。',icon:'icons/icon-192.png'});
+        } else {
+          btn.textContent='❌ 請在設定中允許通知';
+        }
+      });
+    } else {
+      notifOn=true;
+      btn.textContent='✅ 提醒已設定';
+      btn.className='notif-btn notif-on';
+    }
+  } else {
+    notifOn=false;
+    btn.textContent='🔔 開啟帳單推播提醒';
+    btn.className='notif-btn';
+  }
+}
+
+// ── PWA install ──
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  document.getElementById('install-banner').classList.add('show');
+});
+document.getElementById('install-btn').addEventListener('click',()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(()=>{
+      deferredPrompt=null;
+      document.getElementById('install-banner').classList.remove('show');
+    });
+  }
+});
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+// ── service worker ──
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
